@@ -1,0 +1,50 @@
+import type { DebugOptions } from "./types";
+export declare class PseudoDebugKit {
+    private opts;
+    private root?;
+    private styleEl?;
+    private gridEl?;
+    private toolbarEl?;
+    private state;
+    private overlayRoot?;
+    private overlayContent?;
+    private overlayPadding?;
+    private overlayMargin?;
+    private stylePanel?;
+    constructor(options?: DebugOptions);
+    init(root?: HTMLElement): void;
+    private markInternal;
+    private isInternal;
+    private injectStyle;
+    private buildUI;
+    private setGridColumns;
+    enable(): void;
+    disable(): void;
+    toggle(): void;
+    isEnabled(): boolean;
+    setWire(on: boolean): void;
+    setGrid(on: boolean): void;
+    setTags(on: boolean): void;
+    setHighlight(on: boolean): void;
+    setStyleInfo(on: boolean): void;
+    getState(): {
+        wire: boolean;
+        grid: boolean;
+        tags: boolean;
+        highlight: boolean;
+        styleInfo: boolean;
+    };
+    private show;
+    destroy(): void;
+    private buildHighlightOverlay;
+    private updateHighlight;
+    private buildStylePanel;
+    private px;
+    private updateStyleInfo;
+    private applyWire;
+    private applyGrid;
+    private applyTags;
+    private toggleMode;
+    private bindShortcuts;
+}
+//# sourceMappingURL=index.d.ts.map

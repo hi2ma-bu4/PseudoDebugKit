@@ -1,0 +1,56 @@
+html, body {
+	height: 100%;
+	margin: 0;
+	overflow-x: hidden;
+	padding: 0;
+	width: 100%;
+}
+
+body {
+	padding-top: 70px;
+}
+
+.sidebar {
+	max-width: 260px;
+	min-width: 220px;
+}
+
+.hero {
+	background: linear-gradient(90deg, #0062e6 0%, #3b8dff 100%);
+	color: white;
+}
+
+.card-grid {
+	gap: 1rem;
+}
+
+.timeline {
+	list-style: none;
+	padding: 0;
+}
+
+.timeline li {
+	border-left: 3px solid #dee2e6;
+	margin-left: 1rem;
+	padding: .6rem 0 1rem .8rem;
+	position: relative;
+}
+
+.timeline li::before {
+	background: #0d6efd;
+	border-radius: 50%;
+	content: '';
+	height: 12px;
+	left: -7px;
+	position: absolute;
+	top: 1rem;
+	width: 12px;
+}
+
+#liveToast {
+	pointer-events: none;
+}
+
+#liveToast.show {
+	pointer-events: auto;
+}

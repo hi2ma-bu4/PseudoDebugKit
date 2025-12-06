@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>PseudoDebugKit</title>
+
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous" defer></script>
+	<link href="./style.css" rel="stylesheet" />
+
+	<script type="module">
+		import { PseudoDebugKit } from '../dist/PseudoDebugKit.js';
+		const dbg = new PseudoDebugKit({ gridColumns: 12, accent: '#3b82f6', panel: true, shortcuts: true, prefix:"pdk-" });
+		dbg.init();
+		dbg.enable(); // 表示
+		// dbg.disable(); // 非表示
+		window.dbg = dbg;
+	</script>
+</head>
+<body>
+	<!-- Navbar -->
+	<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+		<div class="container-fluid">
+			<a class="navbar-brand" href="#">サンプルサイト</a>
+			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="navMenu">
+				<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+					<li class="nav-item"><a class="nav-link active" href="#">ホーム</a></li>
+					<li class="nav-item"><a class="nav-link" href="#features">機能</a></li>
+					<li class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">コンポーネント</a>
+						<ul class="dropdown-menu">
+							<li><a class="dropdown-item" href="#cards">カード</a></li>
+							<li><a class="dropdown-item" href="#tables">テーブル</a></li>
+							<li><a class="dropdown-item" href="#forms">フォーム</a></li>
+						</ul>
+					</li>
+				</ul>
+				<form class="d-flex" role="search">
+					<input class="form-control me-2" type="search" placeholder="検索">
+					<button class="btn btn-outline-light" type="submit">検索</button>
+				</form>
+			</div>
+		</div>
+	</nav>
+
+	<div class="container-fluid">
+		<div class="row flex-nowrap w-100">
+
+			<!-- Sidebar -->
+			<aside class="col-lg-2 d-none d-lg-block sidebar bg-light p-3">
+				<h6 class="text-muted">ナビゲーション</h6>
+				<div class="list-group">
+					<a href="#" class="list-group-item list-group-item-action active">ダッシュボード</a>
+					<a href="#cards" class="list-group-item list-group-item-action">カード</a>
+					<a href="#tables" class="list-group-item list-group-item-action">テーブル</a>
+					<a href="#charts" class="list-group-item list-group-item-action">チャート</a>
+					<a href="#forms" class="list-group-item list-group-item-action">フォーム</a>
+				</div>
+				<hr>
+				<h6 class="text-muted">タグ</h6>
+				<div>
+					<span class="badge bg-primary">重要</span>
+					<span class="badge bg-success">完了</span>
+					<span class="badge bg-warning text-dark">要確認</span>
+				</div>
+			</aside>
+
+			<!-- Main -->
+			<main class="col-lg-10 p-4">
+
+				<!-- Hero -->
+				<section class="hero p-5 rounded mb-4 text-white">
+					<div class="container">
+						<div class="row align-items-center">
+							<div class="col-lg-8">
+								<h1 class="display-6">情報量多めの Bootstrap サンプル</h1>
+								<p class="lead">複数の構造体（カード、テーブル、チャート、フォーム、タイムライン等）を含む単一ファイルデモです。フロントエンドのコンポーネント設計に便利。</p>
+								<a class="btn btn-light btn-lg" href="#features">はじめる</a>
+							</div>
+							<div class="col-lg-4 text-center">
+								<img src="https://placehold.co/200x200/png" class="rounded-circle img-fluid" alt="avatar">
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Feature Cards -->
+				<section id="features" class="mb-4">
+					<h3>特徴</h3>
+					<div class="row row-cols-1 row-cols-lg-3 g-3 card-grid">
+						<div class="col">
+							<div class="card h-100">
+								<div class="card-body">
+									<h5 class="card-title">レスポンシブ設計</h5>
+									<p class="card-text">Bootstrap のグリッドであらゆる画面に対応。</p>
+									<ul>
+										<li>グリッド</li>
+										<li>ユーティリティクラス</li>
+										<li>コンポーネント</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+
+						<div class="col">
+							<div class="card h-100">
+								<img src="https://placehold.co/600x200" class="card-img-top" alt="...">
+								<div class="card-body">
+									<h5 class="card-title">ビジュアル要素</h5>
+									<p class="card-text">カード、アコーディオン、モーダル、トーストなど。</p>
+								</div>
+							</div>
+						</div>
+
+						<div class="col">
+							<div class="card h-100">
+								<div class="card-body">
+									<h5 class="card-title">データ表示</h5>
+									<p class="card-text">表やチャートで構造化データを表示。</p>
+									<p class="mb-0"><strong>サンプル:</strong> テーブル、棒グラフ、円グラフ。</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Cards Section -->
+				<section id="cards" class="mb-4">
+					<h3>カードのバリエーション</h3>
+					<div class="row g-3">
+						<div class="col-lg-4">
+							<div class="card">
+								<div class="card-header">プロフィール</div>
+								<div class="card-body text-center">
+									<img src="https://placehold.co/100x100" class="rounded-circle mb-2" alt="profile">
+									<h5>山田 太郎</h5>
+									<p class="text-muted">フロントエンドエンジニア</p>
+									<div class="d-grid gap-2">
+										<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#contactModal">連絡</button>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="col-lg-4">
+							<div class="card">
+								<img src="https://placehold.co/600x160" class="card-img-top" alt="...">
+								<div class="card-body">
+									<h5 class="card-title">記事カード</h5>
+									<p class="card-text">要約テキスト。複数行の説明が可能です。</p>
+									<a href="#" class="btn btn-outline-primary">続きを読む</a>
+								</div>
+							</div>
+						</div>
+
+						<div class="col-lg-4">
+							<div class="card">
+								<div class="card-body">
+									<h5 class="card-title">統計</h5>
+									<p class="card-text display-6">1,234</p>
+									<p class="mb-0 text-muted">今月の新規ユーザー</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Tables -->
+				<section id="tables" class="mb-4">
+					<h3>データテーブル</h3>
+					<div class="table-responsive">
+						<table class="table table-striped table-hover" id="dataTable">
+							<thead>
+								<tr>
+									<th scope="col">#</th>
+									<th scope="col">名前</th>
+									<th scope="col">役職</th>
+									<th scope="col">登録日</th>
+									<th scope="col">アクション</th>
+								</tr>
+							</thead>
+							<tbody>
+								<!-- サンプルデータ -->
+								<tr>
+									<th>1</th>
+									<td>田中 花子</td>
+									<td>デザイナー</td>
+									<td>2025-10-01</td>
+									<td><button class="btn btn-sm btn-outline-secondary" onclick="showDetails(1)">詳細</button></td>
+								</tr>
+								<tr>
+									<th>2</th>
+									<td>佐藤 次郎</td>
+									<td>エンジニア</td>
+									<td>2025-09-14</td>
+									<td><button class="btn btn-sm btn-outline-secondary" onclick="showDetails(2)">詳細</button></td>
+								</tr>
+								<tr>
+									<th>3</th>
+									<td>高橋 三郎</td>
+									<td>PM</td>
+									<td>2025-11-20</td>
+									<td><button class="btn btn-sm btn-outline-secondary" onclick="showDetails(3)">詳細</button></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</section>
+
+				<!-- Image Gallery -->
+				<section id="images" class="mb-4">
+					<h3>画像ギャラリー</h3>
+					<p class="text-muted">クリックで拡大表示（モーダル内カルーセル）</p>
+					<div class="row g-2">
+						<div class="col-6 col-lg-3">
+							<img src="https://placehold.co/600x400?text=Image+1" class="img-fluid rounded gallery-thumb" data-index="0" alt="img1">
+						</div>
+						<div class="col-6 col-lg-3">
+							<img src="https://placehold.co/600x400?text=Image+2" class="img-fluid rounded gallery-thumb" data-index="1" alt="img2">
+						</div>
+						<div class="col-6 col-lg-3">
+							<img src="https://placehold.co/600x400?text=Image+3" class="img-fluid rounded gallery-thumb" data-index="2" alt="img3">
+						</div>
+						<div class="col-6 col-lg-3">
+							<img src="https://placehold.co/600x400?text=Image+4" class="img-fluid rounded gallery-thumb" data-index="3" alt="img4">
+						</div>
+					</div>
+
+					<!-- Modal + Carousel -->
+					<div class="modal fade" id="galleryModal" tabindex="-1">
+						<div class="modal-dialog modal-xl modal-dialog-centered">
+							<div class="modal-content bg-dark">
+								<div class="modal-body p-0 position-relative">
+									<div id="galleryCarousel" class="carousel slide" data-bs-ride="false">
+										<div class="carousel-inner">
+											<div class="carousel-item active">
+												<img src="https://placehold.co/1200x800?text=Image+1" class="d-block w-100" alt="img1-lg">
+											</div>
+											<div class="carousel-item">
+												<img src="https://placehold.co/1200x800?text=Image+2" class="d-block w-100" alt="img2-lg">
+											</div>
+											<div class="carousel-item">
+												<img src="https://placehold.co/1200x800?text=Image+3" class="d-block w-100" alt="img3-lg">
+											</div>
+											<div class="carousel-item">
+												<img src="https://placehold.co/1200x800?text=Image+4" class="d-block w-100" alt="img4-lg">
+											</div>
+										</div>
+										<button class="carousel-control-prev" type="button" data-bs-target="#galleryCarousel" data-bs-slide="prev">
+											<span class="carousel-control-prev-icon" aria-hidden="true"></span>
+											<span class="visually-hidden">前へ</span>
+										</button>
+										<button class="carousel-control-next" type="button" data-bs-target="#galleryCarousel" data-bs-slide="next">
+											<span class="carousel-control-next-icon" aria-hidden="true"></span>
+											<span class="visually-hidden">次へ</span>
+										</button>
+									</div>
+									<button type="button" class="btn-close btn-close-white position-absolute" style="right:1rem; top:1rem; z-index: 1;" data-bs-dismiss="modal" aria-label="閉じる"></button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Forms -->
+				<section id="forms" class="mb-4">
+					<h3>フォームとバリデーション</h3>
+					<form id="sampleForm" class="row g-3 needs-validation" novalidate>
+						<div class="col-lg-6">
+							<label class="form-label">氏名</label>
+							<input type="text" class="form-control" id="name" required>
+							<div class="invalid-feedback">氏名は必須です。</div>
+						</div>
+						<div class="col-lg-6">
+							<label class="form-label">メール</label>
+							<input type="email" class="form-control" id="email" required>
+							<div class="invalid-feedback">有効なメールアドレスを入力してください。</div>
+						</div>
+						<div class="col-12">
+							<label class="form-label">メッセージ</label>
+							<textarea class="form-control" id="message" rows="3"></textarea>
+						</div>
+						<div class="col-12 d-flex align-items-center">
+							<input class="form-check-input me-2" type="checkbox" id="subscribe">
+							<label class="form-check-label">ニュースレターを受け取る</label>
+						</div>
+						<div class="col-12">
+							<button class="btn btn-primary" type="submit">送信</button>
+						</div>
+					</form>
+				</section>
+
+				<!-- Timeline & Utilities -->
+				<section class="mb-4">
+					<h3>タイムライン</h3>
+					<ul class="timeline">
+						<li>
+							<strong>2025-11-01</strong>
+							<p>バージョン1.0 リリース</p>
+						</li>
+						<li>
+							<strong>2025-11-15</strong>
+							<p>ユーザーフィードバック反映</p>
+						</li>
+						<li>
+							<strong>2025-12-01</strong>
+							<p>メジャーアップデート計画中</p>
+						</li>
+					</ul>
+				</section>
+
+				<!-- Footer -->
+				<footer class="mt-5 pt-4 border-top">
+					<div class="d-flex justify-content-between">
+						<small class="text-muted">© 2025 hi2ma-bu4</small>
+						<div>
+							<a href="#" class="text-decoration-none me-2">利用規約</a>
+							<a href="#" class="text-decoration-none">プライバシー</a>
+						</div>
+					</div>
+				</footer>
+
+			</main>
+		</div>
+	</div>
+
+	<!-- Contact Modal -->
+	<div class="modal fade" id="contactModal" tabindex="-1">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">連絡フォーム</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body">
+					<form id="contactForm">
+						<div class="mb-3">
+							<label class="form-label">メール</label>
+							<input type="email" class="form-control" required>
+						</div>
+						<div class="mb-3">
+							<label class="form-label">メッセージ</label>
+							<textarea class="form-control" rows="3" required></textarea>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+					<button class="btn btn-primary" onclick="submitContact()">送信</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Toast (通知) -->
+	<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+		<div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+			<div class="toast-header">
+				<strong class="me-auto">通知</strong>
+				<small>今</small>
+				<button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast"></button>
+			</div>
+			<div class="toast-body">操作が完了しました。</div>
+		</div>
+	</div>
+
+	<script src="./index.js" defer></script>
+</body>
+</html>
