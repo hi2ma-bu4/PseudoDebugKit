@@ -15,6 +15,10 @@ export class PseudoDebugKit {
 	private overlayMargin?: HTMLDivElement;
 
 	private stylePanel?: HTMLDivElement;
+	private shortcutCleanup?: () => void;
+
+	private styleCache: WeakMap<HTMLElement, CSSStyleDeclaration> = new WeakMap();
+	private parsedValuesCache: WeakMap<CSSStyleDeclaration, Map<string, number>> = new WeakMap();
 
 	constructor(options?: DebugOptions) {
 		this.opts = { gridColumns: 12, accent: "#ff6b6b", panel: false, shortcuts: false, prefix: "pdk-", ...(options || {}) };
@@ -27,7 +31,9 @@ export class PseudoDebugKit {
 		this.buildUI();
 		this.buildHighlightOverlay();
 		this.buildStylePanel();
-		if (this.opts.shortcuts) this.bindShortcuts();
+		if (this.opts.shortcuts) {
+			this.shortcutCleanup = this.bindShortcuts();
+		}
 	}
 
 	private markInternal(el: HTMLElement) {
@@ -47,12 +53,16 @@ export class PseudoDebugKit {
 	private buildUI() {
 		if (!this.opts.panel) return;
 
-		// toolbar
+		this.buildToolbar();
+		this.buildGrid();
+	}
+
+	private buildToolbar() {
 		this.toolbarEl = document.createElement("div");
 		this.toolbarEl.id = `${this.opts.prefix}dbg-toolbar`;
 		this.markInternal(this.toolbarEl);
 
-		const modes: Array<[string, string]> = [
+		const modes: Array<[keyof typeof this.state, string]> = [
 			["wire", "Wireframe"],
 			["highlight", "Highlight"],
 			["styleInfo", "Style Info"],
@@ -64,12 +74,13 @@ export class PseudoDebugKit {
 			btn.dataset.mode = mode;
 			btn.textContent = label;
 			this.markInternal(btn);
-			btn.addEventListener("click", () => this.toggleMode(mode as keyof typeof this.state, btn));
+			btn.addEventListener("click", () => this.toggleMode(mode, btn));
 			this.toolbarEl.appendChild(btn);
 		}
 		document.body.appendChild(this.toolbarEl);
+	}
 
-		// grid container
+	private buildGrid() {
 		this.gridEl = document.createElement("div");
 		this.gridEl.id = `${this.opts.prefix}dbg-grid`;
 		this.markInternal(this.gridEl);
@@ -142,11 +153,11 @@ export class PseudoDebugKit {
 	}
 
 	public destroy() {
-		this.styleEl?.remove();
-		this.toolbarEl?.remove();
-		this.gridEl?.remove();
-		this.overlayRoot?.remove();
-		this.stylePanel?.remove();
+		const elements = [this.styleEl, this.toolbarEl, this.gridEl, this.overlayRoot, this.stylePanel];
+		for (const el of elements) {
+			el?.remove();
+		}
+		this.shortcutCleanup?.();
 		this.root = undefined;
 	}
 
@@ -179,39 +190,72 @@ export class PseudoDebugKit {
 
 		document.body.appendChild(this.overlayRoot);
 
-		document.addEventListener("mouseover", (e) => {
+		const debouncedUpdate = this.debounce((target: HTMLElement) => {
 			if (!this.state.highlight && !this.state.styleInfo) return;
 
-			const target = e.target as HTMLElement;
 			if (!target || this.isInternal(target)) return;
 
 			if (this.state.highlight) this.updateHighlight(target);
 			if (this.state.styleInfo) this.updateStyleInfo(target);
+		}, 10);
+
+		const debouncedHide = this.debounce(() => {
+			if (this.overlayRoot) this.overlayRoot.style.display = "none";
+			if (this.stylePanel) this.stylePanel.style.display = "none";
+		}, 10);
+
+		document.addEventListener("mouseover", (e) => {
+			debouncedUpdate(e.target as HTMLElement);
 		});
 
 		document.addEventListener("mouseout", (e) => {
-			if (this.overlayRoot) this.overlayRoot.style.display = "none";
-			if (this.stylePanel) this.stylePanel.style.display = "none";
+			debouncedHide();
 		});
+	}
+
+	private debounce<F extends (...args: any[]) => void>(func: F, waitFor: number) {
+		let timeout: number;
+
+		return (...args: Parameters<F>): void => {
+			clearTimeout(timeout);
+			timeout = setTimeout(() => func(...args), waitFor);
+		};
+	}
+	private getStyleCache(el: HTMLElement) {
+		if (!this.styleCache.has(el)) {
+			this.styleCache.set(el, getComputedStyle(el));
+		}
+		return this.styleCache.get(el)!;
+	}
+
+	private parseCSSValue(style: CSSStyleDeclaration, prop: string): number {
+		if (!this.parsedValuesCache.has(style)) {
+			this.parsedValuesCache.set(style, new Map());
+		}
+		const cache = this.parsedValuesCache.get(style)!;
+		if (!cache.has(prop)) {
+			cache.set(prop, parseFloat(style.getPropertyValue(prop)));
+		}
+		return cache.get(prop)!;
 	}
 
 	private updateHighlight(el: HTMLElement) {
 		if (!this.overlayRoot) return;
 
 		const rect = el.getBoundingClientRect();
-		const style = getComputedStyle(el);
+		const style = this.getStyleCache(el);
 
 		const pad = {
-			top: parseFloat(style.paddingTop),
-			right: parseFloat(style.paddingRight),
-			bottom: parseFloat(style.paddingBottom),
-			left: parseFloat(style.paddingLeft),
+			top: this.parseCSSValue(style, "padding-top"),
+			right: this.parseCSSValue(style, "padding-right"),
+			bottom: this.parseCSSValue(style, "padding-bottom"),
+			left: this.parseCSSValue(style, "padding-left"),
 		};
 		const mar = {
-			top: parseFloat(style.marginTop),
-			right: parseFloat(style.marginRight),
-			bottom: parseFloat(style.marginBottom),
-			left: parseFloat(style.marginLeft),
+			top: this.parseCSSValue(style, "margin-top"),
+			right: this.parseCSSValue(style, "margin-right"),
+			bottom: this.parseCSSValue(style, "margin-bottom"),
+			left: this.parseCSSValue(style, "margin-left"),
 		};
 
 		this.overlayRoot.style.display = "block";
@@ -265,7 +309,7 @@ export class PseudoDebugKit {
 	private updateStyleInfo(el: HTMLElement) {
 		if (!this.stylePanel) return;
 
-		const style = getComputedStyle(el);
+		const style = this.getStyleCache(el);
 		this.stylePanel.innerHTML = `
 <b>${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}</b><br>
 color: ${style.color}<br>
@@ -278,9 +322,21 @@ margin: ${style.marginTop} ${style.marginRight} ${style.marginBottom} ${style.ma
 		this.stylePanel.style.display = "block";
 	}
 
+	private traverseDOM(node: Node, callback: (el: HTMLElement) => void) {
+		if (this.isInternal(node)) return;
+
+		if (node.nodeType === Node.ELEMENT_NODE) {
+			callback(node as HTMLElement);
+		}
+
+		for (let i = 0; i < node.childNodes.length; i++) {
+			this.traverseDOM(node.childNodes[i], callback);
+		}
+	}
+
 	// ------- modes -------
 	private applyWire(on: boolean) {
-		document.querySelectorAll("body *").forEach((el) => {
+		this.traverseDOM(document.body, (el) => {
 			if (this.isInternal(el)) return;
 			el.classList.toggle(`${this.opts.prefix}dbg-outline`, on);
 		});
@@ -291,7 +347,7 @@ margin: ${style.marginTop} ${style.marginRight} ${style.marginBottom} ${style.ma
 		this.state.grid = on;
 	}
 	private applyTags(on: boolean) {
-		document.querySelectorAll("body *").forEach((el) => {
+		this.traverseDOM(document.body, (el) => {
 			if (this.isInternal(el)) return;
 
 			const h = el as HTMLElement;
@@ -300,6 +356,8 @@ margin: ${style.marginTop} ${style.marginRight} ${style.marginBottom} ${style.ma
 
 				const info = h.tagName.toLowerCase() + (h.id ? `#${h.id}` : "") + (classList.length ? ` .${classList.join(".")}` : "");
 				h.dataset.dbg = info;
+			} else {
+				delete h.dataset.dbg;
 			}
 			h.classList.toggle(`${this.opts.prefix}dbg-tag`, on);
 		});
@@ -323,7 +381,7 @@ margin: ${style.marginTop} ${style.marginRight} ${style.marginBottom} ${style.ma
 	}
 
 	private bindShortcuts() {
-		const handler = (e: KeyboardEvent) => {
+		const shortcutHandler = (e: KeyboardEvent) => {
 			if (e.ctrlKey && e.altKey && e.code === "Pause") {
 				this.applyWire(false);
 				this.applyGrid(false);
@@ -331,15 +389,25 @@ margin: ${style.marginTop} ${style.marginRight} ${style.marginBottom} ${style.ma
 				this.state.highlight = false;
 				this.state.styleInfo = false;
 
-				this.toolbarEl?.querySelectorAll("button").forEach((b) => b.classList.remove(`${this.opts.prefix}active`));
+				if (this.toolbarEl) {
+					this.traverseDOM(this.toolbarEl, (el) => {
+						if (el.tagName === "BUTTON") {
+							el.classList.remove(`${this.opts.prefix}active`);
+						}
+					});
+				}
 
 				if (this.overlayRoot) this.overlayRoot.style.display = "none";
 				if (this.stylePanel) this.stylePanel.style.display = "none";
 
-				this.state = { wire: false, grid: false, tags: false, highlight: false, styleInfo: false };
+				Object.keys(this.state).forEach((k) => (this.state[k as keyof typeof this.state] = false));
 			}
 		};
-		window.addEventListener("keydown", handler);
+		window.addEventListener("keydown", shortcutHandler);
+
+		return () => {
+			window.removeEventListener("keydown", shortcutHandler);
+		};
 	}
 }
 

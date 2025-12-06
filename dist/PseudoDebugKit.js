@@ -33,6 +33,9 @@ var PseudoDebugKit = class {
   overlayPadding;
   overlayMargin;
   stylePanel;
+  shortcutCleanup;
+  styleCache = /* @__PURE__ */ new WeakMap();
+  parsedValuesCache = /* @__PURE__ */ new WeakMap();
   constructor(options) {
     this.opts = { gridColumns: 12, accent: "#ff6b6b", panel: false, shortcuts: false, prefix: "pdk-", ...options || {} };
   }
@@ -43,7 +46,9 @@ var PseudoDebugKit = class {
     this.buildUI();
     this.buildHighlightOverlay();
     this.buildStylePanel();
-    if (this.opts.shortcuts) this.bindShortcuts();
+    if (this.opts.shortcuts) {
+      this.shortcutCleanup = this.bindShortcuts();
+    }
   }
   markInternal(el) {
     el.setAttribute(`data-${this.opts.prefix}internal`, "1");
@@ -59,6 +64,10 @@ var PseudoDebugKit = class {
   }
   buildUI() {
     if (!this.opts.panel) return;
+    this.buildToolbar();
+    this.buildGrid();
+  }
+  buildToolbar() {
     this.toolbarEl = document.createElement("div");
     this.toolbarEl.id = `${this.opts.prefix}dbg-toolbar`;
     this.markInternal(this.toolbarEl);
@@ -78,6 +87,8 @@ var PseudoDebugKit = class {
       this.toolbarEl.appendChild(btn);
     }
     document.body.appendChild(this.toolbarEl);
+  }
+  buildGrid() {
     this.gridEl = document.createElement("div");
     this.gridEl.id = `${this.opts.prefix}dbg-grid`;
     this.markInternal(this.gridEl);
@@ -137,11 +148,11 @@ var PseudoDebugKit = class {
     if (this.gridEl) this.gridEl.style.display = on && this.state.grid ? "block" : "none";
   }
   destroy() {
-    this.styleEl?.remove();
-    this.toolbarEl?.remove();
-    this.gridEl?.remove();
-    this.overlayRoot?.remove();
-    this.stylePanel?.remove();
+    const elements = [this.styleEl, this.toolbarEl, this.gridEl, this.overlayRoot, this.stylePanel];
+    for (const el of elements) {
+      el?.remove();
+    }
+    this.shortcutCleanup?.();
     this.root = void 0;
   }
   buildHighlightOverlay() {
@@ -165,33 +176,61 @@ var PseudoDebugKit = class {
     this.overlayPadding = padding;
     this.overlayMargin = margin;
     document.body.appendChild(this.overlayRoot);
-    document.addEventListener("mouseover", (e) => {
+    const debouncedUpdate = this.debounce((target) => {
       if (!this.state.highlight && !this.state.styleInfo) return;
-      const target = e.target;
       if (!target || this.isInternal(target)) return;
       if (this.state.highlight) this.updateHighlight(target);
       if (this.state.styleInfo) this.updateStyleInfo(target);
-    });
-    document.addEventListener("mouseout", (e) => {
+    }, 10);
+    const debouncedHide = this.debounce(() => {
       if (this.overlayRoot) this.overlayRoot.style.display = "none";
       if (this.stylePanel) this.stylePanel.style.display = "none";
+    }, 10);
+    document.addEventListener("mouseover", (e) => {
+      debouncedUpdate(e.target);
     });
+    document.addEventListener("mouseout", (e) => {
+      debouncedHide();
+    });
+  }
+  debounce(func, waitFor) {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), waitFor);
+    };
+  }
+  getStyleCache(el) {
+    if (!this.styleCache.has(el)) {
+      this.styleCache.set(el, getComputedStyle(el));
+    }
+    return this.styleCache.get(el);
+  }
+  parseCSSValue(style, prop) {
+    if (!this.parsedValuesCache.has(style)) {
+      this.parsedValuesCache.set(style, /* @__PURE__ */ new Map());
+    }
+    const cache = this.parsedValuesCache.get(style);
+    if (!cache.has(prop)) {
+      cache.set(prop, parseFloat(style.getPropertyValue(prop)));
+    }
+    return cache.get(prop);
   }
   updateHighlight(el) {
     if (!this.overlayRoot) return;
     const rect = el.getBoundingClientRect();
-    const style = getComputedStyle(el);
+    const style = this.getStyleCache(el);
     const pad = {
-      top: parseFloat(style.paddingTop),
-      right: parseFloat(style.paddingRight),
-      bottom: parseFloat(style.paddingBottom),
-      left: parseFloat(style.paddingLeft)
+      top: this.parseCSSValue(style, "padding-top"),
+      right: this.parseCSSValue(style, "padding-right"),
+      bottom: this.parseCSSValue(style, "padding-bottom"),
+      left: this.parseCSSValue(style, "padding-left")
     };
     const mar = {
-      top: parseFloat(style.marginTop),
-      right: parseFloat(style.marginRight),
-      bottom: parseFloat(style.marginBottom),
-      left: parseFloat(style.marginLeft)
+      top: this.parseCSSValue(style, "margin-top"),
+      right: this.parseCSSValue(style, "margin-right"),
+      bottom: this.parseCSSValue(style, "margin-bottom"),
+      left: this.parseCSSValue(style, "margin-left")
     };
     this.overlayRoot.style.display = "block";
     this.overlayRoot.style.top = this.px(rect.top - mar.top);
@@ -235,7 +274,7 @@ var PseudoDebugKit = class {
   }
   updateStyleInfo(el) {
     if (!this.stylePanel) return;
-    const style = getComputedStyle(el);
+    const style = this.getStyleCache(el);
     this.stylePanel.innerHTML = `
 <b>${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}</b><br>
 color: ${style.color}<br>
@@ -247,9 +286,18 @@ margin: ${style.marginTop} ${style.marginRight} ${style.marginBottom} ${style.ma
 `;
     this.stylePanel.style.display = "block";
   }
+  traverseDOM(node, callback) {
+    if (this.isInternal(node)) return;
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      callback(node);
+    }
+    for (let i = 0; i < node.childNodes.length; i++) {
+      this.traverseDOM(node.childNodes[i], callback);
+    }
+  }
   // ------- modes -------
   applyWire(on) {
-    document.querySelectorAll("body *").forEach((el) => {
+    this.traverseDOM(document.body, (el) => {
       if (this.isInternal(el)) return;
       el.classList.toggle(`${this.opts.prefix}dbg-outline`, on);
     });
@@ -260,13 +308,15 @@ margin: ${style.marginTop} ${style.marginRight} ${style.marginBottom} ${style.ma
     this.state.grid = on;
   }
   applyTags(on) {
-    document.querySelectorAll("body *").forEach((el) => {
+    this.traverseDOM(document.body, (el) => {
       if (this.isInternal(el)) return;
       const h = el;
       if (on) {
         const classList = Array.from(h.classList).filter((c) => !c.startsWith(this.opts.prefix ?? ""));
         const info = h.tagName.toLowerCase() + (h.id ? `#${h.id}` : "") + (classList.length ? ` .${classList.join(".")}` : "");
         h.dataset.dbg = info;
+      } else {
+        delete h.dataset.dbg;
       }
       h.classList.toggle(`${this.opts.prefix}dbg-tag`, on);
     });
@@ -286,20 +336,29 @@ margin: ${style.marginTop} ${style.marginRight} ${style.marginBottom} ${style.ma
     if (btn) btn.classList.toggle(`${this.opts.prefix}active`, next);
   }
   bindShortcuts() {
-    const handler = (e) => {
+    const shortcutHandler = (e) => {
       if (e.ctrlKey && e.altKey && e.code === "Pause") {
         this.applyWire(false);
         this.applyGrid(false);
         this.applyTags(false);
         this.state.highlight = false;
         this.state.styleInfo = false;
-        this.toolbarEl?.querySelectorAll("button").forEach((b) => b.classList.remove(`${this.opts.prefix}active`));
+        if (this.toolbarEl) {
+          this.traverseDOM(this.toolbarEl, (el) => {
+            if (el.tagName === "BUTTON") {
+              el.classList.remove(`${this.opts.prefix}active`);
+            }
+          });
+        }
         if (this.overlayRoot) this.overlayRoot.style.display = "none";
         if (this.stylePanel) this.stylePanel.style.display = "none";
-        this.state = { wire: false, grid: false, tags: false, highlight: false, styleInfo: false };
+        Object.keys(this.state).forEach((k) => this.state[k] = false);
       }
     };
-    window.addEventListener("keydown", handler);
+    window.addEventListener("keydown", shortcutHandler);
+    return () => {
+      window.removeEventListener("keydown", shortcutHandler);
+    };
   }
 };
 if (typeof window !== "undefined") {
