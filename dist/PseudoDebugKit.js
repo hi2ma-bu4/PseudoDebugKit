@@ -20,7 +20,7 @@ var defaultCSS = (accent = "#ff6b6b", prefix = "pdk-") => (
 `
 );
 
-// src/index.ts
+// src/PseudoDebugKit.ts
 var PseudoDebugKit = class {
   opts;
   root;

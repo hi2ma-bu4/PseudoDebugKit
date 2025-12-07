@@ -10,7 +10,7 @@ const __dirname = resolve(__filename, "../..");
 const srcDir = resolve(__dirname, "src");
 const distDir = resolve(__dirname, "dist");
 
-const entry = resolve(srcDir, "index.ts");
+const entry = resolve(srcDir, "PseudoDebugKit.ts");
 const outFile = "PseudoDebugKit";
 
 async function run(cmd) {

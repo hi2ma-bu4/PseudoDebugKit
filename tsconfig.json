@@ -10,7 +10,7 @@
         "skipLibCheck": true
     },
     "include": [
-        "src/index.ts"
+        "src/PseudoDebugKit.ts"
     ],
     "exclude": [
         "dev",

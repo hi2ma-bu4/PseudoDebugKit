@@ -56,4 +56,4 @@ export declare class PseudoDebugKit {
     private toggleMode;
     private bindShortcuts;
 }
-//# sourceMappingURL=index.d.ts.map
+//# sourceMappingURL=PseudoDebugKit.d.ts.map
