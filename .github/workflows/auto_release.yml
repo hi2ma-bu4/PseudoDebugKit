@@ -117,7 +117,7 @@ jobs:
                   body: ""
                   draft: false
                   prerelease: false
-                  files: types/winlet.d.ts
+                  files: types/index.d.ts
 
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
